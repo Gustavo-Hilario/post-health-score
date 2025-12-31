@@ -169,9 +169,10 @@ Following the project tip to "ask another model to review your code", I used **C
 
 After activating the plugin, you'll see a "Health Score" column in the Posts list:
 
--   Each post shows a grade (A+ through F) with a corresponding emoji
--   Hover over any grade to see the detailed breakdown
--   Click the column header to sort posts by score
+| Low Score | High Score |
+|-----------|------------|
+| ![Low score tooltip](https://github.com/user-attachments/assets/77029dc1-39d2-437a-a37e-5a8d0097970e) | ![High score tooltip](https://github.com/user-attachments/assets/785be84e-e18f-4a89-ac43-c921912a511c) |
+| Hover shows which criteria failed | Hover shows all criteria passed |
 
 ## File Structure
 
