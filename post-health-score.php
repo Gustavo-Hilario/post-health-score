@@ -188,6 +188,47 @@ function phs_get_grade( $score ) {
 }
 
 /**
+ * Build tooltip content showing the breakdown of checks
+ *
+ * @param array $checks The checks array from phs_calculate_score()
+ * @return string HTML content for the tooltip
+ */
+function phs_build_tooltip_content( $checks ) {
+    $lines = array();
+
+    foreach ( $checks as $key => $check ) {
+        $icon  = $check['passed'] ? '✓' : '✗';
+        $value = $check['value'];
+
+        // Format value based on check type
+        switch ( $key ) {
+            case 'word_count':
+                $detail = sprintf( '%d words', $value );
+                break;
+            case 'title_length':
+                $detail = sprintf( '%d chars', $value );
+                break;
+            case 'categories':
+            case 'tags':
+                $detail = sprintf( '%d assigned', $value );
+                break;
+            default:
+                $detail = $value;
+        }
+
+        $lines[] = sprintf(
+            '<span class="phs-tooltip-line %s">%s %s: %s</span>',
+            $check['passed'] ? 'passed' : 'failed',
+            $icon,
+            esc_html( $check['label'] ),
+            esc_html( $detail )
+        );
+    }
+
+    return implode( '', $lines );
+}
+
+/**
  * Render the Health Score column content
  *
  * @param string $column  Column name
@@ -198,15 +239,20 @@ function phs_render_health_score_column( $column, $post_id ) {
         return;
     }
 
-    $score_data = phs_calculate_score( $post_id );
-    $grade      = phs_get_grade( $score_data['score'] );
+    $score_data      = phs_calculate_score( $post_id );
+    $grade           = phs_get_grade( $score_data['score'] );
+    $tooltip_content = phs_build_tooltip_content( $score_data['checks'] );
 
-    // Display grade with emoji
+    // Display grade with emoji and tooltip
     printf(
-        '<span class="phs-grade %s">%s %s</span>',
+        '<span class="phs-grade-wrapper">
+            <span class="phs-grade %s">%s %s</span>
+            <span class="phs-tooltip">%s</span>
+        </span>',
         esc_attr( $grade['class'] ),
         esc_html( $grade['letter'] ),
-        esc_html( $grade['emoji'] )
+        esc_html( $grade['emoji'] ),
+        $tooltip_content // Already escaped in phs_build_tooltip_content()
     );
 }
 add_action( 'manage_posts_custom_column', 'phs_render_health_score_column', 10, 2 );

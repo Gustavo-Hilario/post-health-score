@@ -46,5 +46,62 @@
 
 /* Column width */
 .column-health_score {
-    width: 100px;
+    width: 120px;
+}
+
+/* Grade wrapper for tooltip positioning */
+.phs-grade-wrapper {
+    position: relative;
+    display: inline-block;
+    cursor: help;
+}
+
+/* Tooltip container */
+.phs-tooltip {
+    display: none;
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    margin-bottom: 8px;
+    padding: 10px 12px;
+    background-color: #1d2327;
+    color: #fff;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: normal;
+    white-space: nowrap;
+    z-index: 100;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* Tooltip arrow */
+.phs-tooltip::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 6px solid transparent;
+    border-top-color: #1d2327;
+}
+
+/* Show tooltip on hover */
+.phs-grade-wrapper:hover .phs-tooltip {
+    display: block;
+}
+
+/* Tooltip line styling */
+.phs-tooltip-line {
+    display: block;
+    padding: 2px 0;
+    line-height: 1.4;
+}
+
+.phs-tooltip-line.passed {
+    color: #7ad03a;
+}
+
+.phs-tooltip-line.failed {
+    color: #ff6b6b;
 }
