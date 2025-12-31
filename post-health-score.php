@@ -21,6 +21,14 @@ define( 'PHS_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 define( 'PHS_PLUGIN_VERSION', '1.0.0' );
 
 /**
+ * Load plugin text domain for translations
+ */
+function phs_load_textdomain() {
+    load_plugin_textdomain( 'post-health-score', false, dirname( plugin_basename( __FILE__ ) ) . '/languages' );
+}
+add_action( 'plugins_loaded', 'phs_load_textdomain' );
+
+/**
  * Enqueue admin styles
  *
  * @param string $hook Current admin page hook
@@ -28,6 +36,12 @@ define( 'PHS_PLUGIN_VERSION', '1.0.0' );
 function phs_enqueue_admin_styles( $hook ) {
     // Only load on the posts list page
     if ( 'edit.php' !== $hook ) {
+        return;
+    }
+
+    // Only load for 'post' post type, not pages or custom post types
+    $screen = get_current_screen();
+    if ( ! $screen || 'post' !== $screen->post_type ) {
         return;
     }
 
@@ -70,12 +84,15 @@ function phs_calculate_score( $post_id ) {
     $checks = array();
 
     // Check 1: Word count > 300
-    $content    = get_post_field( 'post_content', $post_id );
-    $word_count = str_word_count( wp_strip_all_tags( $content ) );
+    // Use preg_split for better multibyte/Unicode support
+    $content      = get_post_field( 'post_content', $post_id );
+    $stripped     = wp_strip_all_tags( $content );
+    $words        = preg_split( '/\s+/', $stripped, -1, PREG_SPLIT_NO_EMPTY );
+    $word_count   = count( $words );
     $checks['word_count'] = array(
         'passed' => $word_count > 300,
         'value'  => $word_count,
-        'label'  => 'Word count',
+        'label'  => __( 'Word count', 'post-health-score' ),
     );
     if ( $checks['word_count']['passed'] ) {
         $score++;
@@ -85,35 +102,38 @@ function phs_calculate_score( $post_id ) {
     $has_thumbnail = has_post_thumbnail( $post_id );
     $checks['featured_image'] = array(
         'passed' => $has_thumbnail,
-        'value'  => $has_thumbnail ? 'Yes' : 'No',
-        'label'  => 'Featured image',
+        'value'  => $has_thumbnail ? __( 'Yes', 'post-health-score' ) : __( 'No', 'post-health-score' ),
+        'label'  => __( 'Featured image', 'post-health-score' ),
     );
     if ( $checks['featured_image']['passed'] ) {
         $score++;
     }
 
     // Check 3: Title length between 30-60 characters
+    // Use mb_strlen for proper multibyte character counting
     $title        = get_the_title( $post_id );
-    $title_length = strlen( $title );
+    $title_length = mb_strlen( $title );
     $checks['title_length'] = array(
         'passed' => $title_length >= 30 && $title_length <= 60,
         'value'  => $title_length,
-        'label'  => 'Title length',
+        'label'  => __( 'Title length', 'post-health-score' ),
     );
     if ( $checks['title_length']['passed'] ) {
         $score++;
     }
 
-    // Check 4: Has at least 1 category (excluding "Uncategorized" which has ID 1)
-    $categories      = wp_get_post_categories( $post_id );
-    $categories      = array_filter( $categories, function( $cat_id ) {
-        return 1 !== $cat_id; // Exclude "Uncategorized"
+    // Check 4: Has at least 1 category (excluding the default category)
+    // Use get_option to get the actual default category ID instead of assuming ID 1
+    $default_category = (int) get_option( 'default_category' );
+    $categories       = wp_get_post_categories( $post_id );
+    $categories       = array_filter( $categories, function( $cat_id ) use ( $default_category ) {
+        return $default_category !== $cat_id;
     });
-    $category_count  = count( $categories );
+    $category_count   = count( $categories );
     $checks['categories'] = array(
         'passed' => $category_count > 0,
         'value'  => $category_count,
-        'label'  => 'Categories',
+        'label'  => __( 'Categories', 'post-health-score' ),
     );
     if ( $checks['categories']['passed'] ) {
         $score++;
@@ -125,7 +145,7 @@ function phs_calculate_score( $post_id ) {
     $checks['tags'] = array(
         'passed' => $tag_count > 0,
         'value'  => $tag_count,
-        'label'  => 'Tags',
+        'label'  => __( 'Tags', 'post-health-score' ),
     );
     if ( $checks['tags']['passed'] ) {
         $score++;
@@ -203,14 +223,17 @@ function phs_build_tooltip_content( $checks ) {
         // Format value based on check type
         switch ( $key ) {
             case 'word_count':
-                $detail = sprintf( '%d words', $value );
+                /* translators: %d is the number of words */
+                $detail = sprintf( __( '%d words', 'post-health-score' ), $value );
                 break;
             case 'title_length':
-                $detail = sprintf( '%d chars', $value );
+                /* translators: %d is the number of characters */
+                $detail = sprintf( __( '%d chars', 'post-health-score' ), $value );
                 break;
             case 'categories':
             case 'tags':
-                $detail = sprintf( '%d assigned', $value );
+                /* translators: %d is the number of items assigned */
+                $detail = sprintf( __( '%d assigned', 'post-health-score' ), $value );
                 break;
             default:
                 $detail = $value;
@@ -243,8 +266,8 @@ function phs_render_health_score_column( $column, $post_id ) {
     $grade           = phs_get_grade( $score_data['score'] );
     $tooltip_content = phs_build_tooltip_content( $score_data['checks'] );
 
-    // Store score as post meta for sorting (updates on each view)
-    update_post_meta( $post_id, '_phs_health_score', $score_data['score'] );
+    // Note: Score is stored via save_post hook, not here, to avoid
+    // unnecessary DB writes on every page view
 
     // Display grade with emoji and tooltip
     printf(
