@@ -75,15 +75,69 @@ Add a "Health Score" column to the Posts list in WP Admin that grades each post 
 
 ## Development Process
 
-*This section will be updated as development progresses.*
+The plugin was developed incrementally over 8 commits, following a phased approach:
+
+### What Worked Well
+
+1. **Incremental Development**: Building the plugin step-by-step made it easier to test each feature in isolation and catch issues early.
+
+2. **Claude Code Assistance**: The AI helped with:
+   - Planning the implementation approach
+   - Suggesting WordPress hooks and functions
+   - Writing clean, documented PHP code
+   - Generating CSS for tooltips and badges
+   - Reviewing code structure
+
+3. **Starting with README**: Writing the README first (before any code) helped clarify the project scope and requirements.
+
+4. **MVP First**: Getting a basic working column before adding visual enhancements allowed for faster iteration.
+
+### What I Learned
+
+- WordPress admin column hooks (`manage_posts_columns`, `manage_posts_custom_column`)
+- How to make columns sortable with `manage_edit-post_sortable_columns` and `pre_get_posts`
+- Using post meta to cache calculated values for efficient database queries
+- CSS-only tooltips as an alternative to JavaScript-based solutions
 
 ## Challenges & Solutions
 
-*This section will be updated as challenges are encountered and resolved.*
+### Challenge 1: Column Sorting
+**Problem**: Health scores are calculated dynamically, but WordPress needs a database field to sort by.
+
+**Solution**: Store the score as post meta (`_phs_health_score`) when the column is rendered and when posts are saved. This provides a cached value for efficient sorting.
+
+### Challenge 2: "Uncategorized" Category
+**Problem**: Every post has at least the "Uncategorized" category by default, which would make the category check always pass.
+
+**Solution**: Explicitly exclude category ID 1 (Uncategorized) from the count when checking for meaningful categories.
+
+### Challenge 3: Tooltip Positioning
+**Problem**: Tooltips need to appear above the badge without being clipped by the table row.
+
+**Solution**: Used CSS positioning with `position: absolute`, `bottom: 100%`, and a high `z-index` to ensure visibility.
 
 ## Screenshots
 
-*Screenshots will be added once the plugin is functional.*
+After activating the plugin, you'll see a "Health Score" column in the Posts list:
+
+- Each post shows a grade (A+ through F) with a corresponding emoji
+- Hover over any grade to see the detailed breakdown
+- Click the column header to sort posts by score
+
+## File Structure
+
+```
+post-health-score/
+├── post-health-score.php    # Main plugin file (~310 lines)
+├── assets/
+│   └── css/
+│       └── admin.css        # Admin styling (~107 lines)
+└── README.md                # This file
+```
+
+## License
+
+GPL v2 or later
 
 ---
 
