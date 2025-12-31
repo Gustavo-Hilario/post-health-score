@@ -243,6 +243,9 @@ function phs_render_health_score_column( $column, $post_id ) {
     $grade           = phs_get_grade( $score_data['score'] );
     $tooltip_content = phs_build_tooltip_content( $score_data['checks'] );
 
+    // Store score as post meta for sorting (updates on each view)
+    update_post_meta( $post_id, '_phs_health_score', $score_data['score'] );
+
     // Display grade with emoji and tooltip
     printf(
         '<span class="phs-grade-wrapper">
@@ -256,3 +259,53 @@ function phs_render_health_score_column( $column, $post_id ) {
     );
 }
 add_action( 'manage_posts_custom_column', 'phs_render_health_score_column', 10, 2 );
+
+/**
+ * Make the Health Score column sortable
+ *
+ * @param array $columns Sortable columns
+ * @return array Modified sortable columns
+ */
+function phs_make_column_sortable( $columns ) {
+    $columns['health_score'] = 'health_score';
+    return $columns;
+}
+add_filter( 'manage_edit-post_sortable_columns', 'phs_make_column_sortable' );
+
+/**
+ * Handle sorting by health score
+ *
+ * @param WP_Query $query The main query
+ */
+function phs_handle_health_score_sorting( $query ) {
+    if ( ! is_admin() || ! $query->is_main_query() ) {
+        return;
+    }
+
+    if ( 'health_score' === $query->get( 'orderby' ) ) {
+        $query->set( 'meta_key', '_phs_health_score' );
+        $query->set( 'orderby', 'meta_value_num' );
+    }
+}
+add_action( 'pre_get_posts', 'phs_handle_health_score_sorting' );
+
+/**
+ * Update health score when post is saved
+ *
+ * @param int $post_id Post ID
+ */
+function phs_update_score_on_save( $post_id ) {
+    // Don't run on autosave
+    if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
+        return;
+    }
+
+    // Only for posts
+    if ( 'post' !== get_post_type( $post_id ) ) {
+        return;
+    }
+
+    $score_data = phs_calculate_score( $post_id );
+    update_post_meta( $post_id, '_phs_health_score', $score_data['score'] );
+}
+add_action( 'save_post', 'phs_update_score_on_save' );
