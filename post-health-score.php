@@ -16,6 +16,30 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
+// Define plugin constants
+define( 'PHS_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
+define( 'PHS_PLUGIN_VERSION', '1.0.0' );
+
+/**
+ * Enqueue admin styles
+ *
+ * @param string $hook Current admin page hook
+ */
+function phs_enqueue_admin_styles( $hook ) {
+    // Only load on the posts list page
+    if ( 'edit.php' !== $hook ) {
+        return;
+    }
+
+    wp_enqueue_style(
+        'phs-admin-styles',
+        PHS_PLUGIN_URL . 'assets/css/admin.css',
+        array(),
+        PHS_PLUGIN_VERSION
+    );
+}
+add_action( 'admin_enqueue_scripts', 'phs_enqueue_admin_styles' );
+
 /**
  * Add Health Score column to the Posts list
  *

@@ -1,0 +1,50 @@
+/**
+ * Post Health Score - Admin Styles
+ */
+
+/* Base grade badge styling */
+.phs-grade {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-weight: 600;
+    font-size: 13px;
+    line-height: 1.4;
+    white-space: nowrap;
+}
+
+/* Grade colors */
+.phs-grade.grade-a-plus {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+.phs-grade.grade-a {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+.phs-grade.grade-b {
+    background-color: #fff3cd;
+    color: #856404;
+}
+
+.phs-grade.grade-c {
+    background-color: #ffeeba;
+    color: #856404;
+}
+
+.phs-grade.grade-d {
+    background-color: #f8d7da;
+    color: #721c24;
+}
+
+.phs-grade.grade-f {
+    background-color: #f5c6cb;
+    color: #721c24;
+}
+
+/* Column width */
+.column-health_score {
+    width: 100px;
+}
