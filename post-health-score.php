@@ -36,6 +36,85 @@ function phs_add_health_score_column( $columns ) {
 add_filter( 'manage_posts_columns', 'phs_add_health_score_column' );
 
 /**
+ * Calculate the health score for a post
+ *
+ * @param int $post_id Post ID
+ * @return array Score data including total and individual checks
+ */
+function phs_calculate_score( $post_id ) {
+    $score = 0;
+    $checks = array();
+
+    // Check 1: Word count > 300
+    $content    = get_post_field( 'post_content', $post_id );
+    $word_count = str_word_count( wp_strip_all_tags( $content ) );
+    $checks['word_count'] = array(
+        'passed' => $word_count > 300,
+        'value'  => $word_count,
+        'label'  => 'Word count',
+    );
+    if ( $checks['word_count']['passed'] ) {
+        $score++;
+    }
+
+    // Check 2: Has featured image
+    $has_thumbnail = has_post_thumbnail( $post_id );
+    $checks['featured_image'] = array(
+        'passed' => $has_thumbnail,
+        'value'  => $has_thumbnail ? 'Yes' : 'No',
+        'label'  => 'Featured image',
+    );
+    if ( $checks['featured_image']['passed'] ) {
+        $score++;
+    }
+
+    // Check 3: Title length between 30-60 characters
+    $title        = get_the_title( $post_id );
+    $title_length = strlen( $title );
+    $checks['title_length'] = array(
+        'passed' => $title_length >= 30 && $title_length <= 60,
+        'value'  => $title_length,
+        'label'  => 'Title length',
+    );
+    if ( $checks['title_length']['passed'] ) {
+        $score++;
+    }
+
+    // Check 4: Has at least 1 category (excluding "Uncategorized" which has ID 1)
+    $categories      = wp_get_post_categories( $post_id );
+    $categories      = array_filter( $categories, function( $cat_id ) {
+        return 1 !== $cat_id; // Exclude "Uncategorized"
+    });
+    $category_count  = count( $categories );
+    $checks['categories'] = array(
+        'passed' => $category_count > 0,
+        'value'  => $category_count,
+        'label'  => 'Categories',
+    );
+    if ( $checks['categories']['passed'] ) {
+        $score++;
+    }
+
+    // Check 5: Has at least 1 tag
+    $tags      = wp_get_post_tags( $post_id );
+    $tag_count = count( $tags );
+    $checks['tags'] = array(
+        'passed' => $tag_count > 0,
+        'value'  => $tag_count,
+        'label'  => 'Tags',
+    );
+    if ( $checks['tags']['passed'] ) {
+        $score++;
+    }
+
+    return array(
+        'score'  => $score,
+        'max'    => 5,
+        'checks' => $checks,
+    );
+}
+
+/**
  * Render the Health Score column content
  *
  * @param string $column  Column name
@@ -46,7 +125,13 @@ function phs_render_health_score_column( $column, $post_id ) {
         return;
     }
 
-    // Placeholder for now - scoring logic will be added next
-    echo esc_html( 'Score: --' );
+    $score_data = phs_calculate_score( $post_id );
+
+    // Display simple score for now - grades and styling will be added next
+    printf(
+        '%d/%d',
+        esc_html( $score_data['score'] ),
+        esc_html( $score_data['max'] )
+    );
 }
 add_action( 'manage_posts_custom_column', 'phs_render_health_score_column', 10, 2 );
