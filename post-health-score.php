@@ -115,6 +115,55 @@ function phs_calculate_score( $post_id ) {
 }
 
 /**
+ * Get grade letter and emoji based on score
+ *
+ * @param int $score The score (0-5)
+ * @return array Grade data with letter, emoji, and label
+ */
+function phs_get_grade( $score ) {
+    $grades = array(
+        5 => array(
+            'letter' => 'A+',
+            'emoji'  => '🌟',
+            'label'  => 'Excellent',
+            'class'  => 'grade-a-plus',
+        ),
+        4 => array(
+            'letter' => 'A',
+            'emoji'  => '👍',
+            'label'  => 'Great',
+            'class'  => 'grade-a',
+        ),
+        3 => array(
+            'letter' => 'B',
+            'emoji'  => '😊',
+            'label'  => 'Good',
+            'class'  => 'grade-b',
+        ),
+        2 => array(
+            'letter' => 'C',
+            'emoji'  => '😐',
+            'label'  => 'Needs Work',
+            'class'  => 'grade-c',
+        ),
+        1 => array(
+            'letter' => 'D',
+            'emoji'  => '🔧',
+            'label'  => 'Poor',
+            'class'  => 'grade-d',
+        ),
+        0 => array(
+            'letter' => 'F',
+            'emoji'  => '❌',
+            'label'  => 'Failing',
+            'class'  => 'grade-f',
+        ),
+    );
+
+    return $grades[ $score ] ?? $grades[0];
+}
+
+/**
  * Render the Health Score column content
  *
  * @param string $column  Column name
@@ -126,12 +175,14 @@ function phs_render_health_score_column( $column, $post_id ) {
     }
 
     $score_data = phs_calculate_score( $post_id );
+    $grade      = phs_get_grade( $score_data['score'] );
 
-    // Display simple score for now - grades and styling will be added next
+    // Display grade with emoji
     printf(
-        '%d/%d',
-        esc_html( $score_data['score'] ),
-        esc_html( $score_data['max'] )
+        '<span class="phs-grade %s">%s %s</span>',
+        esc_attr( $grade['class'] ),
+        esc_html( $grade['letter'] ),
+        esc_html( $grade['emoji'] )
     );
 }
 add_action( 'manage_posts_custom_column', 'phs_render_health_score_column', 10, 2 );
