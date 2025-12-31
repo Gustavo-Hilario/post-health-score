@@ -16,4 +16,37 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-// Plugin code will be added in subsequent commits
+/**
+ * Add Health Score column to the Posts list
+ *
+ * @param array $columns Existing columns
+ * @return array Modified columns
+ */
+function phs_add_health_score_column( $columns ) {
+    // Insert after title column
+    $new_columns = array();
+    foreach ( $columns as $key => $value ) {
+        $new_columns[ $key ] = $value;
+        if ( 'title' === $key ) {
+            $new_columns['health_score'] = __( 'Health Score', 'post-health-score' );
+        }
+    }
+    return $new_columns;
+}
+add_filter( 'manage_posts_columns', 'phs_add_health_score_column' );
+
+/**
+ * Render the Health Score column content
+ *
+ * @param string $column  Column name
+ * @param int    $post_id Post ID
+ */
+function phs_render_health_score_column( $column, $post_id ) {
+    if ( 'health_score' !== $column ) {
+        return;
+    }
+
+    // Placeholder for now - scoring logic will be added next
+    echo esc_html( 'Score: --' );
+}
+add_action( 'manage_posts_custom_column', 'phs_render_health_score_column', 10, 2 );
